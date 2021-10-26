@@ -1,0 +1,172 @@
+
+st: any
+
+	  gather_facts: true
+
+	  become: true
+
+	  tasks:
+
+	     - name: start the vms
+
+	       ec2_instance:
+
+	         profile: 'turbot__{{act_name}}'
+
+	         instance_ids:"{{inst_ids}}"
+
+	         region: 
+
+	         state: running
+
+	         wait: True
+
+	        register: start_status 
+
+	        ignore_error: true
+
+	      - debug: var=start_status
+
+	   tags:
+
+	    - start
+
+	
+
+	- host: any
+
+	  gather_facts: true
+
+	  become: true
+
+	  tasks:
+
+	     - name: stop the vms
+
+	       ec2_instance:
+
+	         profile: 'turbot__{{act_name}}'
+
+	         instance_ids:"{{inst_ids}}"
+
+	         region: 
+
+	         state: stopped
+
+	         wait: True
+
+	        register: stop_status 
+
+	        ignore_error: true
+
+	      - debug: var=stop_status
+
+	   tags:
+
+	    - stop
+
+	- host: any
+
+	  gather_facts: true
+
+	  become: true
+
+	  tasks:
+
+	    - name: creating csv
+
+	      file:
+
+	        path: '/start_stop_report.csv'
+
+	        state: touch
+
+	        run_once: True
+
+	    - name: setting heading for csv
+
+	      lineinfile:
+
+	         path: './start_report.csv'
+
+	         line: 'INSTANCE_ID,ACCOUNT_NAME,START/STOP_STATUS,DATE,TIME'
+
+	         regexp :"INSTANCE_ID"
+
+	         change_when: True
+
+	         run_once: True
+
+	      tags:
+
+	        - stop
+
+	        - start
+
+	
+
+	- host: any
+
+	  gather_facts: true
+
+	  become: true
+
+	  tasks:
+
+	     - name: entry for csv
+
+	       lineinfile:
+
+	          path: './start_stop_report.csv'
+
+	          line: "{{inst_ids}},{{act_name}}",instance start succeded,{{ansible_date_time.date}},{{ansible_date_time.time}}
+
+	       when: start_status | length != 0 and start_status.failed ==false
+
+	   - name: entry for csv
+
+	      linefile:
+
+	         path:'./start_status_report.csv'
+
+	         line: "{{inst_ids}},{{act_name}}",instance start failed,{{ansible_date_time.date}},{{ansible_date_time.time}}
+
+	         when: start_status | length !=0 and status.failed ==true
+
+	     tags:
+
+	      -start 
+
+	
+
+	- host: any
+
+	  gather_facts: true
+
+	  become: true
+
+	  tasks:
+
+	     - name: entry for csv
+
+	       lineinfile:
+
+	          path: './start_stop_report.csv'
+
+	          line: "{{inst_ids}},{{act_name}}",instance stop succeded,{{ansible_date_time.date}},{{ansible_date_time.time}}
+
+	       when: stop_status | length != 0 and stop_status.failed ==false
+
+	   - name: entry for csv
+
+	      linefile:
+
+	         path:'./start_status_report.csv'
+
+	         line: "{{inst_ids}},{{act_name}}",instance stop failed,{{ansible_date_time.date}},{{ansible_date_time.time}}
+
+	         when: stop_status | length !=0 and status.failed ==true
+
+	     tags:
+
+	      -stop
