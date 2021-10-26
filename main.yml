@@ -1,5 +1,5 @@
 
-st: any
+       -  host: any
 
 	  gather_facts: true
 
@@ -123,7 +123,7 @@ st: any
 
 	       when: start_status | length != 0 and start_status.failed ==false
 
-	   - name: entry for csv
+	   -  name: entry for csv
 
 	      linefile:
 
